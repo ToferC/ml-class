@@ -15,10 +15,10 @@ from plotutil import PlotCallback
 wandb.init()
 config = wandb.config
 
-config.repeated_predictions = True
-config.look_back = 20 # How far back we are looking to make future predictions
+config.repeated_predictions = False
+config.look_back = 20
 
-def load_data(data_type="sin"):
+def load_data(data_type="airline"):
     if data_type == "flu":
         df = pd.read_csv('flusearches.csv')
         data = df.flu.astype('float32').values
@@ -39,7 +39,7 @@ def create_dataset(dataset):
         dataY.append(dataset[i + config.look_back])
     return np.array(dataX), np.array(dataY)
 
-data = load_data("flu")
+data = load_data()
     
 # normalize data to between 0 and 1
 max_val = max(data)
@@ -54,19 +54,15 @@ test = data[split:]
 trainX, trainY = create_dataset(train)
 testX, testY = create_dataset(test)
 
-trainX = trainX[:, :, np.newaxis] #have empty dimensions to get things to line up
+trainX = trainX[:, :, np.newaxis]
 testX = testX[:, :, np.newaxis]
 
 # create and fit the RNN
 model = Sequential()
-
-# SimpleRNN - look_back == longest pattern we can model; 
-# 1st 1 == dimensionality of output space & state vector size
-# 2nd 1 == input dimensions
-model.add(SimpleRNN(2, input_shape=(config.look_back,1 )))
+model.add(Flatten(input_shape=(config.look_back,1 )))
 model.add(Dense(1))
-model.compile(loss='mae', optimizer='rmsprop')
-model.fit(trainX, trainY, epochs=300, batch_size=20, validation_data=(testX, testY),  callbacks=[WandbCallback(), PlotCallback(trainX, trainY, testX, testY, config.look_back)])
+model.compile(loss='mse', optimizer='adam')
+model.fit(trainX, trainY, epochs=1000, batch_size=10, validation_data=(testX, testY),  callbacks=[WandbCallback(), PlotCallback(trainX, trainY, testX, testY, config.look_back)])
 
 
 
