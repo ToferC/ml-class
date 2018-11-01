@@ -4,6 +4,7 @@ import pandas as pd
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
 from keras.layers import LSTM, SimpleRNN, Dropout
+from keras.optimizers import RMSprop
 from keras.callbacks import LambdaCallback
 
 import wandb
@@ -65,7 +66,7 @@ model = Sequential()
 # 2nd 1 == input dimensions
 model.add(SimpleRNN(2, input_shape=(config.look_back,1 )))
 model.add(Dense(1))
-model.compile(loss='mae', optimizer='rmsprop')
+model.compile(loss='mae', optimizer=RMSprop(lr=0.01))
 model.fit(trainX, trainY, epochs=300, batch_size=20, validation_data=(testX, testY),  callbacks=[WandbCallback(), PlotCallback(trainX, trainY, testX, testY, config.look_back)])
 
 
